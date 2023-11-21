@@ -4,6 +4,8 @@ import FunnelIcon from '@heroicons/react/24/outline/FunnelIcon';
 import BookmarkIcon from '@heroicons/react/24/solid/BookmarkIcon';
 import {clsx} from 'clsx';
 import {useTranslations} from 'next-intl';
+import AutoSizer from 'react-virtualized-auto-sizer';
+import {FixedSizeGrid} from 'react-window';
 
 import {InfoIcon} from '@/components/icons/info';
 import {InputBox} from '@/components/input/box';
@@ -11,7 +13,6 @@ import {InputRowWithTitle} from '@/components/input/filter/rowWithTitle';
 import {useCollapsible} from '@/components/layout/collapsible/hook';
 import {Collapsible} from '@/components/layout/collapsible/main';
 import {Flex} from '@/components/layout/flex/common';
-import {Grid} from '@/components/layout/grid';
 import {IconWithInfo} from '@/components/shared/common/image/iconWithInfo';
 import {NextImage} from '@/components/shared/common/image/main';
 import {FeatureLinkImage} from '@/components/shared/link/featureImage';
@@ -103,54 +104,96 @@ export const PokeboxImporterView = ({
           />
         </Flex>
       </Collapsible>
-      <Grid className="grid-cols-1 gap-1.5 lg:grid-cols-2">
-        {pokebox.filter(({uuid}) => isIncluded[uuid]).map(({name, isShiny, isFavorite, ...pokeInBox}) => (
-          <button
-            key={pokeInBox.uuid} className="button-clickable-bg group p-1"
-            onClick={() => onPokeboxPicked({name, ...pokeInBox})}
-          >
-            <Flex direction="row" className="items-center gap-1.5">
-              <IconWithInfo
-                imageSrc={`/images/pokemon/icons/${pokeInBox.pokemon}.png`}
-                imageAlt={t2(`PokemonName.${pokeInBox.pokemon}`)}
-                imageDimension="h-12 w-12"
-                imageSizes={imageIconSizes}
-                info={pokeInBox.level}
-                className="shrink-0"
-              />
-              <Flex>
-                <Flex direction="row" center className={clsx('gap-1', isFavorite && pokeInBoxFavoriteStyle)}>
-                  {
-                    isShiny &&
-                    <InfoIcon>
-                      <div className="relative h-4 w-4">
-                        <NextImage
-                          src="/images/generic/flash.png" alt={t3('Shiny')}
-                          sizes={imageSmallIconSizes} className="invert-on-light"
-                        />
-                      </div>
-                    </InfoIcon>
+      <Flex className="h-[70vh] gap-1 overflow-auto">
+        <AutoSizer>
+          {({height, width}) => {
+            const filteredPokebox = pokebox.filter(({uuid}) => isIncluded[uuid]);
+
+            const smallScreen = width < 594 ? true : false;
+
+            const gridColumnCount = smallScreen ? 1 : 2;
+            const gridColumnWidth = smallScreen ? width : width / 2 - 10;
+            const gridRowCount = Math.ceil(filteredPokebox.length / gridColumnCount);
+
+            const buttonColumnWidth = smallScreen ? '99%' : '49.45%';
+
+            return (
+              <FixedSizeGrid
+                height={height}
+                columnCount={gridColumnCount}
+                columnWidth={gridColumnWidth}
+                rowCount={gridRowCount}
+                rowHeight={63}
+                itemData={filteredPokebox}
+                width={width}
+                overscanRowCount={5}
+              >
+                {({style, data, rowIndex, columnIndex}) => {
+                  const index = smallScreen ? rowIndex : rowIndex * 2 + columnIndex;
+
+                  if (!data[index]) {
+                    return null;
                   }
-                  {isFavorite && <BookmarkIcon className="h-5 w-5"/>}
-                  <div className="truncate">
-                    {name}
-                  </div>
-                </Flex>
-                <Flex className="items-end md:flex-row">
-                  <PokemonNatureIndicator nature={pokeInBox.nature} hideName/>
-                  <div className="ml-auto">
-                    <PokemonSubSkillIndicator
-                      subSkill={pokeInBox.subSkill}
-                      subSkillMap={subSkillMap}
-                      level={pokeInBox.level}
-                    />
-                  </div>
-                </Flex>
-              </Flex>
-            </Flex>
-          </button>
-        ))}
-      </Grid>
+
+                  const pokeInBox = data[index];
+                  const {name, isShiny, isFavorite} = data[index];
+
+                  const {height, width, ...styleToUse} = style;
+
+                  return (
+                    <button
+                      key={pokeInBox.uuid}
+                      className="button-clickable-bg center group p-1"
+                      onClick={() => onPokeboxPicked({...pokeInBox})}
+                      style={{...styleToUse, 'width': buttonColumnWidth, 'height': 57}}
+                    >
+                      <Flex direction="row" center className="items-center gap-1.5">
+                        <IconWithInfo
+                          imageSrc={`/images/pokemon/icons/${pokeInBox.pokemon}.png`}
+                          imageAlt={t2(`PokemonName.${pokeInBox.pokemon}`)}
+                          imageDimension="h-12 w-12"
+                          imageSizes={imageIconSizes}
+                          info={pokeInBox.level}
+                          className="shrink-0"
+                        />
+                        <Flex>
+                          <Flex direction="row" center className={clsx('gap-1', isFavorite && pokeInBoxFavoriteStyle)}>
+                            {
+                              isShiny &&
+                              <InfoIcon>
+                                <div className="relative h-4 w-4">
+                                  <NextImage
+                                    src="/images/generic/flash.png" alt={t3('Shiny')}
+                                    sizes={imageSmallIconSizes} className="invert-on-light"
+                                  />
+                                </div>
+                              </InfoIcon>
+                            }
+                            {isFavorite && <BookmarkIcon className="h-5 w-5"/>}
+                            <div className="truncate">
+                              {name}
+                            </div>
+                          </Flex>
+                          <Flex className="items-end md:flex-row">
+                            <PokemonNatureIndicator nature={pokeInBox.nature} hideName/>
+                            <div className="ml-auto">
+                              <PokemonSubSkillIndicator
+                                subSkill={pokeInBox.subSkill}
+                                subSkillMap={subSkillMap}
+                                level={pokeInBox.level}
+                              />
+                            </div>
+                          </Flex>
+                        </Flex>
+                      </Flex>
+                    </button>
+                  );
+                }}
+              </FixedSizeGrid>
+            );
+          }}
+        </AutoSizer>
+      </Flex>
     </Flex>
   );
 };
