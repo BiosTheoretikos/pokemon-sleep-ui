@@ -43,10 +43,12 @@ export const TeamMakerInputUI = ({input, setInput, onRun, ...props}: TeamMakerIn
     target,
     recipeLevel,
     ingredientCount,
+    previewFinalEvolution,
     showInsufficientIngredients,
   } = input;
 
   const t = useTranslations('UI.InPage.Team');
+  const t2 = useTranslations('UI.InPage.Pokedex.Input');
   const mealTypes = usePossibleMealTypes(Object.values(mealMap).filter(isNotNullish));
 
   return (
@@ -113,6 +115,16 @@ export const TeamMakerInputUI = ({input, setInput, onRun, ...props}: TeamMakerIn
         })}
       />
       <InputRow className="justify-end">
+        <ToggleButton
+          active={previewFinalEvolution}
+          onClick={() => setInput((original) => ({
+            ...original,
+            previewFinalEvolution: !original.previewFinalEvolution,
+          }))}
+          className={clsx('group gap-1', textFilterButtonStyle)}
+        >
+          {t2('FinalEvolution')}
+        </ToggleButton>
         <ToggleButton
           active={showInsufficientIngredients}
           onClick={() => setInput(({showInsufficientIngredients, ...original}) => ({

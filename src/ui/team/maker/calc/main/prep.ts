@@ -5,7 +5,7 @@ import {GetTeamMakerCalcPrepOpts, GetTeamMakerResultsOpts} from '@/ui/team/maker
 import {toTargetMeals} from '@/utils/user/settings/utils';
 
 
-export const getTeamMakerResultsOpts = (opts: GetTeamMakerCalcPrepOpts): GetTeamMakerResultsOpts => {
+export const getTeamMakerCalcPrepOpts = (opts: GetTeamMakerCalcPrepOpts): GetTeamMakerResultsOpts => {
   const {input, mealMap} = opts;
   const calculatedInput: TeamMakerInputCalculated = {
     recipeLevel: input.recipeLevel,
